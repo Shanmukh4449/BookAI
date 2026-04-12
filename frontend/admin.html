@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - BookAI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+  <div class="container">
+    <a class="navbar-brand text-white" href="index.html">
+      <i class="bi bi-book-half me-2" style="color:#f59e0b"></i>Book<span class="text-accent">AI</span>
+      <span class="admin-badge ms-2">Admin</span>
+    </a>
+    <div class="glass-search-wrap mx-3">
+      <i class="bi bi-search glass-search-icon"></i>
+      <input type="text" id="global-search-input" class="glass-search-bar" placeholder="Search books...">
+    </div>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto gap-2 align-items-center">
+        <li class="nav-item"><a class="nav-link text-white-50" href="dashboard.html">Dashboard</a></li>
+        <li class="nav-item"><button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-4">
+  <h3 class="fw-black mb-1">Admin Panel</h3>
+  <p class="text-muted mb-4">Manage books, genres, users and login activity.</p>
+
+  <ul class="nav nav-tabs mb-4" id="admin-tabs">
+    <li class="nav-item">
+      <button class="nav-link active" onclick="showTab('stats',this)">
+        <i class="bi bi-bar-chart me-1"></i>Dashboard
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" onclick="showTab('books',this)">
+        <i class="bi bi-book me-1"></i>Manage Books
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" onclick="showTab('add',this)">
+        <i class="bi bi-plus-circle me-1"></i>Add Book
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" onclick="showTab('genres',this)">
+        <i class="bi bi-tags me-1"></i>Genres
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" onclick="showTab('users',this)">
+        <i class="bi bi-people me-1"></i>Users
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" onclick="showTab('history',this)">
+        <i class="bi bi-clock-history me-1"></i>Login History
+      </button>
+    </li>
+    <!-- ✅ FIX 11: Admin Reviews Tab -->
+    <li class="nav-item">
+      <button class="nav-link" onclick="showTab('reviews',this)">
+        <i class="bi bi-chat-square-text me-1"></i>All Reviews
+      </button>
+    </li>
+  </ul>
+
+  <!-- TAB: STATS DASHBOARD -->
+  <div id="tab-stats">
+    <div class="row g-3 mb-4" id="stats-cards">
+      <div class="col-12 text-center py-4"><div class="spinner-border text-primary"></div></div>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="chart-card">
+          <h6 class="fw-bold mb-3"><i class="bi bi-bar-chart me-2 text-primary"></i>Books per Genre</h6>
+          <canvas id="genreChart" height="220"></canvas>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="chart-card">
+          <h6 class="fw-bold mb-3"><i class="bi bi-graph-up me-2 text-success"></i>User Registrations (Last 7 Days)</h6>
+          <canvas id="userChart" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="row g-4 mt-2">
+      <div class="col-md-6">
+        <div class="chart-card">
+          <h6 class="fw-bold mb-3"><i class="bi bi-trophy me-2 text-warning"></i>Top Rated Books</h6>
+          <div id="top-books-list"></div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="chart-card">
+          <h6 class="fw-bold mb-3"><i class="bi bi-clock me-2 text-info"></i>Recent Logins</h6>
+          <div id="recent-logins-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: MANAGE BOOKS -->
+  <div id="tab-books" style="display:none">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold">All Books</h5>
+      <button class="btn btn-primary btn-sm" onclick="loadAdminBooks()">
+        <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+      </button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr><th>#</th><th>Title</th><th>Author</th><th>Genre</th><th>Rating</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="books-table-body">
+          <tr><td colspan="6" class="text-center"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB: ADD BOOK -->
+  <div id="tab-add" style="display:none">
+    <div class="row justify-content-center">
+      <div class="col-md-7">
+        <div class="card border-0 shadow-sm p-4">
+          <h5 class="fw-bold mb-4"><i class="bi bi-plus-circle me-2 text-primary"></i>Add New Book</h5>
+          <div id="add-alert" class="alert d-none"></div>
+          <form id="add-book-form">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Title *</label>
+                <input type="text" id="ab-title" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Author *</label>
+                <input type="text" id="ab-author" class="form-control" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Genre *</label>
+                <select id="ab-genre" class="form-select" required>
+                  <option value="">Loading genres...</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Rating (0–5)</label>
+                <input type="number" id="ab-rating" class="form-control" min="0" max="5" step="0.1" placeholder="4.5">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Description *</label>
+                <textarea id="ab-description" class="form-control" rows="4" required minlength="20"></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Platform Link (Amazon/Goodreads)</label>
+                <input type="url" id="ab-link" class="form-control" placeholder="https://...">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Cover Image URL</label>
+                <input type="url" id="ab-cover" class="form-control" placeholder="https://...">
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-primary px-5">
+                  <i class="bi bi-plus me-2"></i>Add Book
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: GENRES -->
+  <div id="tab-genres" style="display:none">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card border-0 shadow-sm p-4 mb-4">
+          <h5 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2 text-primary"></i>Add New Genre</h5>
+          <div id="genre-alert" class="alert d-none"></div>
+          <div class="input-group">
+            <input type="text" id="new-genre-input" class="form-control" placeholder="e.g. Horror, Self-Help, Comics...">
+            <button class="btn btn-primary" onclick="addNewGenre()">Add Genre</button>
+          </div>
+        </div>
+        <div class="card border-0 shadow-sm p-4">
+          <h6 class="fw-bold mb-3">All Genres</h6>
+          <div id="genres-list">
+            <div class="spinner-border spinner-border-sm text-primary"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: USERS -->
+  <div id="tab-users" style="display:none">
+    <h5 class="fw-bold mb-3">Registered Users</h5>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr><th>#</th><th>Name</th><th>Email</th><th>Role</th><th>Genre</th><th>Joined</th></tr>
+        </thead>
+        <tbody id="users-table-body">
+          <tr><td colspan="6" class="text-center"><div class="spinner-border spinner-border-sm"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB: LOGIN HISTORY -->
+  <div id="tab-history" style="display:none">
+    <h5 class="fw-bold mb-3">Login History (Last 100)</h5>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr><th>#</th><th>User</th><th>Email</th><th>IP Address</th><th>Login Time</th></tr>
+        </thead>
+        <tbody id="history-table-body">
+          <tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ✅ FIX 11: ALL REVIEWS TAB -->
+  <div id="tab-reviews" style="display:none">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold">All Reviews</h5>
+      <button class="btn btn-primary btn-sm" onclick="loadAllReviews()">
+        <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+      </button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-dark">
+          <tr><th>#</th><th>Book</th><th>User</th><th>Rating</th><th>Review</th><th>Date</th><th>Action</th></tr>
+        </thead>
+        <tbody id="reviews-table-body">
+          <tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal fade" id="editModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Edit Book</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="edit-alert" class="alert d-none"></div>
+        <input type="hidden" id="edit-id">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Title *</label>
+            <input type="text" id="edit-title" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Author *</label>
+            <input type="text" id="edit-author" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Genre</label>
+            <select id="edit-genre" class="form-select">
+              <option>Loading...</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Rating (0–5)</label>
+            <input type="number" id="edit-rating" class="form-control" min="0" max="5" step="0.1">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Description *</label>
+            <textarea id="edit-description" class="form-control" rows="4"></textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Platform Link</label>
+            <input type="url" id="edit-link" class="form-control">
+          </div>
+          <div class="col-12">
+            <label class="form-label">Cover URL</label>
+            <input type="url" id="edit-cover" class="form-control">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEdit()">
+          <i class="bi bi-save me-1"></i>Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Socket.IO client -->
+<script src="http://localhost:5000/socket.io/socket.io.js"></script>
+<script src="app.js"></script>
+<script>
+  requireAuth();
+  if (!isAdmin()) { alert('Access Denied. Admins only.'); window.location.href = 'dashboard.html'; }
+
+  let genreChart = null;
+  let userChart  = null;
+
+  function showTab(tab, btn) {
+    ['stats','books','add','genres','users','history','reviews'].forEach(t => {
+      document.getElementById(`tab-${t}`).style.display = 'none';
+    });
+    document.querySelectorAll('#admin-tabs .nav-link').forEach(b => b.classList.remove('active'));
+    document.getElementById(`tab-${tab}`).style.display = 'block';
+    btn.classList.add('active');
+    if (tab === 'stats')   loadStats();
+    if (tab === 'books')   loadAdminBooks();
+    if (tab === 'add')     populateGenreSelect('ab-genre');
+    if (tab === 'genres')  loadGenresList();
+    if (tab === 'users')   loadUsers();
+    if (tab === 'history') loadHistory();
+    if (tab === 'reviews') loadAllReviews(); // ✅ FIX 11
+  }
+
+  // ── SOCKET: listen for real-time book updates ─────────────────────────────
+  const socket = getSocket();
+  if (socket) {
+    socket.on('bookAdded',   () => { showToast('New book added!'); });
+    socket.on('bookUpdated', () => { /* silently refresh if on books tab */ });
+  }
+
+  // ── STATS ─────────────────────────────────────────────────────────────────
+  async function loadStats() {
+    const { data } = await authFetch(`${API_BASE}/admin/stats`);
+    if (!data.success) return;
+    const s = data.stats;
+
+    document.getElementById('stats-cards').innerHTML = `
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm stat-card text-center p-3" style="background:linear-gradient(135deg,#eff6ff,#dbeafe)">
+          <i class="bi bi-people fs-2 text-primary"></i>
+          <h3 class="fw-bold mt-2 mb-0">${s.totalUsers}</h3>
+          <small class="text-muted">Total Users</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm stat-card text-center p-3" style="background:linear-gradient(135deg,#fffbeb,#fef3c7)">
+          <i class="bi bi-book fs-2 text-warning"></i>
+          <h3 class="fw-bold mt-2 mb-0">${s.totalBooks}</h3>
+          <small class="text-muted">Total Books</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm stat-card text-center p-3" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7)">
+          <i class="bi bi-chat-square-text fs-2 text-success"></i>
+          <h3 class="fw-bold mt-2 mb-0">${s.totalReviews}</h3>
+          <small class="text-muted">Total Reviews</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm stat-card text-center p-3" style="background:linear-gradient(135deg,#fdf4ff,#fae8ff)">
+          <i class="bi bi-fire fs-2" style="color:#9333ea"></i>
+          <h3 class="fw-bold mt-2 mb-0" style="font-size:1.2rem;">${s.popularGenre}</h3>
+          <small class="text-muted">Top Genre</small>
+        </div>
+      </div>`;
+
+    // Genre bar chart
+    const gCtx = document.getElementById('genreChart').getContext('2d');
+    if (genreChart) genreChart.destroy();
+    genreChart = new Chart(gCtx, {
+      type: 'bar',
+      data: {
+        labels: s.genreDistribution.map(g => g._id),
+        datasets: [{
+          label: 'Books',
+          data:  s.genreDistribution.map(g => g.count),
+          backgroundColor: 'rgba(79,70,229,0.7)',
+          borderRadius: 8
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+
+    // User line chart
+    const uCtx = document.getElementById('userChart').getContext('2d');
+    if (userChart) userChart.destroy();
+    userChart = new Chart(uCtx, {
+      type: 'line',
+      data: {
+        labels: s.usersByDay.map(d => d._id),
+        datasets: [{
+          label: 'New Users',
+          data:  s.usersByDay.map(d => d.count),
+          borderColor: '#06b6d4',
+          backgroundColor: 'rgba(6,182,212,0.15)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 5
+        }]
+      },
+      options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+
+    // Top books
+    document.getElementById('top-books-list').innerHTML = s.topBooks.map((b, i) => `
+      <div class="d-flex align-items-center gap-2 mb-2 p-2 rounded" style="background:#f8fafc">
+        <span class="badge bg-warning text-dark">${i+1}</span>
+        <div class="flex-fill">
+          <div class="fw-semibold small">${b.title}</div>
+          <small class="text-muted">${b.author}</small>
+        </div>
+        <span class="badge bg-primary">${b.rating}</span>
+      </div>`).join('');
+
+    // Recent logins
+    document.getElementById('recent-logins-list').innerHTML = s.recentLogins.map(h => `
+      <div class="d-flex align-items-center gap-2 mb-2 p-2 rounded" style="background:#f8fafc">
+        <i class="bi bi-person-circle text-primary fs-5"></i>
+        <div class="flex-fill">
+          <div class="fw-semibold small">${h.user_id?.name || 'Unknown'}</div>
+          <small class="text-muted">${h.email}</small>
+        </div>
+        <small class="text-muted">${new Date(h.login_time).toLocaleDateString()}</small>
+      </div>`).join('');
+  }
+
+  // ── MANAGE BOOKS ──────────────────────────────────────────────────────────
+  async function loadAdminBooks() {
+    const tbody = document.getElementById('books-table-body');
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+    try {
+      const res  = await fetch(`${API_BASE}/books`);
+      const data = await res.json();
+      if (data.success) {
+        tbody.innerHTML = data.books.map((b, i) => `
+          <tr>
+            <td>${i+1}</td>
+            <td><strong>${b.title}</strong></td>
+            <td>${b.author}</td>
+            <td><span class="badge bg-primary">${b.genre}</span></td>
+            <td>${b.rating}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary me-1" onclick='openEdit(${JSON.stringify(b)})'>
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" onclick="deleteBook('${b._id}')">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>`).join('');
+      }
+    } catch {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-danger text-center">Failed to load books.</td></tr>';
+    }
+  }
+
+  // ── OPEN EDIT MODAL (BUG FIXED) ───────────────────────────────────────────
+  async function openEdit(book) {
+    document.getElementById('edit-id').value          = book._id;
+    document.getElementById('edit-title').value       = book.title;
+    document.getElementById('edit-author').value      = book.author;
+    document.getElementById('edit-rating').value      = book.rating;
+    document.getElementById('edit-description').value = book.description;
+    document.getElementById('edit-link').value        = book.platform_link || '';
+    document.getElementById('edit-cover').value       = book.cover_url || '';
+    document.getElementById('edit-alert').classList.add('d-none');
+    // Populate genre dropdown then set value
+    await populateGenreSelect('edit-genre', book.genre);
+    document.getElementById('edit-genre').value = book.genre;
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+  }
+
+  async function saveEdit() {
+    const id = document.getElementById('edit-id').value;
+    if (!id) { showToast('No book ID found', 'error'); return; }
+    const body = {
+      title:         document.getElementById('edit-title').value.trim(),
+      author:        document.getElementById('edit-author').value.trim(),
+      genre:         document.getElementById('edit-genre').value,
+      rating:        parseFloat(document.getElementById('edit-rating').value) || 0,
+      description:   document.getElementById('edit-description').value.trim(),
+      platform_link: document.getElementById('edit-link').value.trim(),
+      cover_url:     document.getElementById('edit-cover').value.trim()
+    };
+    if (!body.title || !body.author || !body.description) {
+      const box = document.getElementById('edit-alert');
+      box.className = 'alert alert-warning';
+      box.textContent = 'Title, author and description are required.';
+      box.classList.remove('d-none');
+      return;
+    }
+    const { data } = await authFetch(`${API_BASE}/admin/update-book/${id}`, {
+      method: 'PUT',
+      body:   JSON.stringify(body)
+    });
+    if (data.success) {
+      bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+      showToast('Book updated successfully! ✅');
+      loadAdminBooks();
+    } else {
+      const box = document.getElementById('edit-alert');
+      box.className = 'alert alert-danger';
+      box.textContent = data.message || 'Update failed.';
+      box.classList.remove('d-none');
+    }
+  }
+
+  async function deleteBook(id) {
+    if (!confirm('Delete this book permanently?')) return;
+    const { data } = await authFetch(`${API_BASE}/admin/delete-book/${id}`, { method: 'DELETE' });
+    if (data.success) { showToast('Deleted!'); loadAdminBooks(); }
+    else showToast(data.message, 'error');
+  }
+
+  // ── ADD BOOK ──────────────────────────────────────────────────────────────
+  document.getElementById('add-book-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const body = {
+      title:         document.getElementById('ab-title').value.trim(),
+      author:        document.getElementById('ab-author').value.trim(),
+      genre:         document.getElementById('ab-genre').value,
+      description:   document.getElementById('ab-description').value.trim(),
+      rating:        parseFloat(document.getElementById('ab-rating').value) || 0,
+      platform_link: document.getElementById('ab-link').value.trim(),
+      cover_url:     document.getElementById('ab-cover').value.trim()
+    };
+    const { data } = await authFetch(`${API_BASE}/admin/add-book`, {
+      method: 'POST',
+      body:   JSON.stringify(body)
+    });
+    const box = document.getElementById('add-alert');
+    box.classList.remove('d-none');
+    if (data.success) {
+      box.className = 'alert alert-success';
+      box.textContent = 'Book added successfully!';
+      document.getElementById('add-book-form').reset();
+    } else {
+      box.className = 'alert alert-danger';
+      box.textContent = data.message;
+    }
+  });
+
+  // ── GENRES ────────────────────────────────────────────────────────────────
+  async function loadGenresList() {
+    const genres   = await loadGenres();
+    const container = document.getElementById('genres-list');
+    container.innerHTML = genres.map(g => `
+      <span class="badge bg-light text-dark border me-2 mb-2 px-3 py-2" style="font-size:0.85rem;">${g}</span>
+    `).join('');
+  }
+
+  async function addNewGenre() {
+    const name    = document.getElementById('new-genre-input').value.trim();
+    const alertEl = document.getElementById('genre-alert');
+    if (!name) return;
+    const { data } = await authFetch(`${API_BASE}/admin/add-genre`, {
+      method: 'POST',
+      body:   JSON.stringify({ name })
+    });
+    alertEl.classList.remove('d-none');
+    if (data.success) {
+      alertEl.className = 'alert alert-success';
+      alertEl.textContent = `Genre "${name}" added!`;
+      document.getElementById('new-genre-input').value = '';
+      loadGenresList();
+    } else {
+      alertEl.className = 'alert alert-danger';
+      alertEl.textContent = data.message;
+    }
+  }
+
+  // ── USERS ─────────────────────────────────────────────────────────────────
+  async function loadUsers() {
+    const tbody    = document.getElementById('users-table-body');
+    const { data } = await authFetch(`${API_BASE}/admin/users`);
+    if (data.success) {
+      tbody.innerHTML = data.users.map((u, i) => `
+        <tr>
+          <td>${i+1}</td><td>${u.name}</td><td>${u.email}</td>
+          <td><span class="badge ${u.role === 'admin' ? 'bg-danger' : 'bg-secondary'}">${u.role}</span></td>
+          <td>${u.favorite_genre}</td>
+          <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+        </tr>`).join('');
+    }
+  }
+
+  // ── LOGIN HISTORY ─────────────────────────────────────────────────────────
+  async function loadHistory() {
+    const tbody    = document.getElementById('history-table-body');
+    const { data } = await authFetch(`${API_BASE}/admin/login-history`);
+    if (data.success) {
+      tbody.innerHTML = data.history.map((h, i) => `
+        <tr>
+          <td>${i+1}</td>
+          <td>${h.user_id?.name || 'Unknown'}</td>
+          <td>${h.email}</td>
+          <td><code>${h.ip_address}</code></td>
+          <td>${new Date(h.login_time).toLocaleString()}</td>
+        </tr>`).join('');
+    }
+  }
+
+  // ✅ FIX 11: Load all reviews for admin
+  async function loadAllReviews() {
+    const tbody    = document.getElementById('reviews-table-body');
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm text-primary"></div></td></tr>';
+    const { data } = await authFetch(`${API_BASE}/admin/reviews`);
+    if (data.success) {
+      if (data.reviews.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No reviews yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.reviews.map((r, i) => `
+        <tr>
+          <td>${i+1}</td>
+          <td><strong>${r.book_id?.title || 'Unknown'}</strong><br><small class="text-muted">${r.book_id?.genre || ''}</small></td>
+          <td>${r.user_id?.name || 'Unknown'}<br><small class="text-muted">${r.user_id?.email || ''}</small></td>
+          <td>${renderStars(r.rating)} <span class="badge bg-warning text-dark">${r.rating}</span></td>
+          <td style="max-width:250px;"><small>${r.review_text}</small></td>
+          <td><small>${new Date(r.createdAt).toLocaleDateString()}</small></td>
+          <td>
+            <button class="btn btn-sm btn-outline-danger" onclick="adminDeleteReview('${r._id}')">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>`).join('');
+    } else {
+      tbody.innerHTML = `<tr><td colspan="7" class="text-danger text-center">${data.message}</td></tr>`;
+    }
+  }
+
+  async function adminDeleteReview(id) {
+    if (!confirm('Delete this review permanently?')) return;
+    const { data } = await authFetch(`${API_BASE}/admin/reviews/${id}`, { method: 'DELETE' });
+    if (data.success) { showToast('Review deleted!'); loadAllReviews(); }
+    else showToast(data.message, 'error');
+  }
+
+  // Load default tab
+  loadStats();
+</script>
+</body>
+</html>

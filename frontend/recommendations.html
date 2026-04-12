@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recommendations - BookAI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+  <div class="container">
+    <a class="navbar-brand text-white" href="index.html">
+      <i class="bi bi-book-half me-2" style="color:#f59e0b"></i>Book<span class="text-accent">AI</span>
+    </a>
+    <div class="glass-search-wrap mx-3">
+      <i class="bi bi-search glass-search-icon"></i>
+      <input type="text" id="global-search-input" class="glass-search-bar" placeholder="Search books...">
+    </div>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto gap-2 align-items-center">
+        <li class="nav-item"><a class="nav-link text-white-50" href="dashboard.html">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link text-white-50" href="wishlist.html"><i class="bi bi-heart me-1"></i>Wishlist</a></li>
+        <li class="nav-item"><button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div style="background:linear-gradient(135deg,#0f172a,#312e81); padding:50px 0; color:white;">
+  <div class="container text-center">
+    <span class="badge bg-warning text-dark px-3 py-2 rounded-pill mb-3">
+      <i class="bi bi-cpu me-1"></i>Powered by TF-IDF + Cosine Similarity
+    </span>
+    <h2 class="fw-black mb-2" style="font-size:2.5rem;">Smart Book Recommendations</h2>
+    <p class="text-white-50">AI analyses book content to find the most similar books for you.</p>
+  </div>
+</div>
+
+<div class="container py-5">
+  <!-- TABS -->
+  <ul class="nav nav-pills mb-4 justify-content-center" id="rec-tabs">
+    <li class="nav-item">
+      <button class="nav-link active px-4 py-2 me-2" onclick="showTab('basic',this)">
+        <i class="bi bi-heart me-1"></i>Genre-Based
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link px-4 py-2" onclick="showTab('ai',this)">
+        <i class="bi bi-cpu me-1"></i>AI-Based
+      </button>
+    </li>
+  </ul>
+
+  <!-- AI INFO BOX -->
+  <div id="ai-info" class="card border-0 shadow-sm mb-4 p-4" style="display:none;">
+    <div class="row align-items-center">
+      <div class="col-md-7">
+        <h6 class="fw-bold"><i class="bi bi-info-circle me-2 text-primary"></i>How It Works</h6>
+        <p class="mb-0 small text-muted">
+          <strong>TF-IDF</strong> converts each book's description into a numerical vector.
+          <strong>Cosine Similarity</strong> measures the angle between two vectors —
+          a higher score means more similar content!
+        </p>
+      </div>
+      <div class="col-md-5">
+        <label class="form-label fw-semibold small">Select a book to find similar ones:</label>
+        <select id="book-select" class="form-select form-select-sm mb-2">
+          <option value="">Loading...</option>
+        </select>
+        <button class="btn btn-primary btn-sm w-100" onclick="loadAIRecs()">
+          <i class="bi bi-cpu me-1"></i>Find Similar Books
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <h5 id="rec-label" class="text-muted"><i class="bi bi-heart me-2"></i>Books matching your favourite genre</h5>
+  </div>
+  <div id="rec-container" class="row">
+    <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+  </div>
+</div>
+
+<footer class="text-center">
+  <div class="container">
+    <p class="mb-0 text-white-50 small">BookAI — TF-IDF Cosine Similarity AI Engine</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="app.js"></script>
+<script>
+  requireAuth();
+
+  function showTab(tab, btn) {
+    document.querySelectorAll('#rec-tabs .nav-link').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('ai-info').style.display = tab === 'ai' ? 'block' : 'none';
+    if (tab === 'basic') {
+      document.getElementById('rec-label').innerHTML = '<i class="bi bi-heart me-2"></i>Books matching your favourite genre';
+      loadBasicRecs();
+    } else {
+      document.getElementById('rec-label').innerHTML = '<i class="bi bi-cpu me-2"></i>AI-Powered Similar Books';
+      loadAllBooksForSelect();
+    }
+  }
+
+  async function loadAllBooksForSelect() {
+    try {
+      const res  = await fetch(`${API_BASE}/books`);
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('book-select').innerHTML =
+          '<option value="">— Select a book —</option>' +
+          data.books.map(b => `<option value="${b._id}">${b.title} (${b.genre})</option>`).join('');
+      }
+    } catch {}
+    document.getElementById('rec-container').innerHTML =
+      '<div class="col-12 text-center text-muted py-4"><p>Select a book above and click "Find Similar Books".</p></div>';
+  }
+
+  async function loadBasicRecs() {
+    document.getElementById('rec-container').innerHTML =
+      '<div class="loading-spinner"><div class="spinner-border text-primary"></div></div>';
+    try {
+      const { data } = await authFetch(`${API_BASE}/recommendations/basic`);
+      if (data.success && data.books.length > 0) {
+        document.getElementById('rec-container').innerHTML = data.books.map(b => renderBookCard(b)).join('');
+      } else {
+        document.getElementById('rec-container').innerHTML =
+          '<div class="col-12 text-center text-muted py-4"><p>No books found. Seed the database.</p></div>';
+      }
+    } catch {
+      document.getElementById('rec-container').innerHTML =
+        '<div class="col-12 text-center text-danger py-4"><p>Failed to load.</p></div>';
+    }
+  }
+
+  async function loadAIRecs() {
+    const bookId = document.getElementById('book-select').value;
+    if (!bookId) { showToast('Please select a book first!', 'warning'); return; }
+    document.getElementById('rec-container').innerHTML =
+      '<div class="loading-spinner"><div class="spinner-border text-primary"></div></div>';
+    try {
+      const { data } = await authFetch(`${API_BASE}/recommendations/ai?book_id=${bookId}&topN=6`);
+      if (data.success && data.books.length > 0) {
+        document.getElementById('rec-label').innerHTML =
+          `<i class="bi bi-cpu me-2"></i>AI found ${data.books.length} similar books to <strong>"${data.target_book}"</strong>`;
+        document.getElementById('rec-container').innerHTML = data.books.map(b => renderBookCard(b)).join('');
+      } else {
+        document.getElementById('rec-container').innerHTML =
+          '<div class="col-12 text-center text-muted py-4"><p>Not enough data. Try another book.</p></div>';
+      }
+    } catch {
+      document.getElementById('rec-container').innerHTML =
+        '<div class="col-12 text-center text-danger py-4"><p>AI engine error.</p></div>';
+    }
+  }
+
+  loadBasicRecs();
+</script>
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - BookAI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+  <div class="container">
+    <a class="navbar-brand text-white" href="index.html">
+      <i class="bi bi-book-half me-2" style="color:#f59e0b"></i>Book<span class="text-accent">AI</span>
+    </a>
+    <div class="glass-search-wrap mx-3">
+      <i class="bi bi-search glass-search-icon"></i>
+      <input type="text" id="global-search-input" class="glass-search-bar" placeholder="Search books...">
+    </div>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto align-items-center gap-2">
+        <li class="nav-item"><a class="nav-link text-white-50" href="index.html">Home</a></li>
+        <li class="nav-item" id="nav-wishlist">
+          <a class="nav-link text-white-50" href="wishlist.html"><i class="bi bi-heart me-1"></i>Wishlist</a>
+        </li>
+        <li class="nav-item"><a class="nav-link text-white-50" href="recommendations.html">Recommendations</a></li>
+        <li id="nav-admin" class="nav-item" style="display:none">
+          <a href="admin.html"><span class="admin-badge">Admin Panel</span></a>
+        </li>
+        <li class="nav-item"><button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- WELCOME BANNER -->
+<div style="background:linear-gradient(135deg,#0f172a,#1e293b); padding:40px 0; color:white;">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h2 class="fw-bold mb-1">Welcome back, <span id="user-name" class="text-warning">Reader</span>! 👋</h2>
+        <p class="text-white-50 mb-0">Here are your personalised book picks.</p>
+      </div>
+      <div class="col-md-4 text-end">
+        <div class="d-flex align-items-center gap-2 justify-content-end flex-wrap">
+          <span class="badge bg-primary px-3 py-2 fs-6" id="genre-badge">Genre: Fiction</span>
+          <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#genreModal">
+            <i class="bi bi-pencil me-1"></i>Change
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="container my-4">
+  <div class="row g-3">
+    <div class="col-md-3">
+      <div class="card text-center p-3 border-0 shadow-sm stat-card" style="background:linear-gradient(135deg,#eff6ff,#dbeafe)">
+        <i class="bi bi-book fs-2 text-primary"></i>
+        <h4 class="fw-bold mt-2" id="total-books">-</h4>
+        <small class="text-muted">Total Books</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center p-3 border-0 shadow-sm stat-card" style="background:linear-gradient(135deg,#fffbeb,#fef3c7)">
+        <i class="bi bi-stars fs-2 text-warning"></i>
+        <h4 class="fw-bold mt-2">AI</h4>
+        <small class="text-muted">Recommendations</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center p-3 border-0 shadow-sm stat-card" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7)">
+        <i class="bi bi-heart fs-2 text-danger"></i>
+        <h4 class="fw-bold mt-2" id="wishlist-count">-</h4>
+        <small class="text-muted">Wishlist</small>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-center p-3 border-0 shadow-sm stat-card" style="background:linear-gradient(135deg,#fdf4ff,#fae8ff)">
+        <i class="bi bi-cpu fs-2 text-purple" style="color:#9333ea"></i>
+        <h4 class="fw-bold mt-2">TF-IDF</h4>
+        <small class="text-muted">AI Engine</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK ACTIONS -->
+<div class="container mb-4">
+  <div class="row g-3">
+    <div class="col-md-4">
+      <a href="recommendations.html" class="text-decoration-none">
+        <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3 action-card">
+          <div class="rounded-circle bg-primary p-3"><i class="bi bi-cpu text-white fs-4"></i></div>
+          <div><h6 class="fw-bold mb-0">AI Recommendations</h6><small class="text-muted">Discover with AI</small></div>
+          <i class="bi bi-chevron-right ms-auto text-muted"></i>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-4">
+      <a href="search.html" class="text-decoration-none">
+        <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3 action-card">
+          <div class="rounded-circle bg-success p-3"><i class="bi bi-search text-white fs-4"></i></div>
+          <div><h6 class="fw-bold mb-0">Search Books</h6><small class="text-muted">Find any book</small></div>
+          <i class="bi bi-chevron-right ms-auto text-muted"></i>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-4">
+      <a href="wishlist.html" class="text-decoration-none">
+        <div class="card border-0 shadow-sm p-3 d-flex flex-row align-items-center gap-3 action-card">
+          <div class="rounded-circle bg-danger p-3"><i class="bi bi-heart text-white fs-4"></i></div>
+          <div><h6 class="fw-bold mb-0">My Wishlist</h6><small class="text-muted">Saved books</small></div>
+          <i class="bi bi-chevron-right ms-auto text-muted"></i>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- RECOMMENDED BOOKS -->
+<div class="container mb-5">
+  <h4 class="section-title">Recommended For You</h4>
+  <div id="recommended-books" class="row">
+    <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+  </div>
+</div>
+
+<footer class="text-center">
+  <div class="container">
+    <p class="mb-0 text-white-50 small">BookAI — Software Quality &amp; Reliability Mini Project</p>
+  </div>
+</footer>
+
+<!-- CHANGE GENRE MODAL -->
+<div class="modal fade" id="genreModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">Change Favourite Genre</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="genre-modal-alert" class="alert d-none"></div>
+        <label class="form-label fw-semibold">Select Genre</label>
+        <select id="genre-select-modal" class="form-select">
+          <option>Loading...</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" onclick="saveGenre()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="app.js"></script>
+<script>
+  requireAuth();
+  const user = getUser();
+  document.getElementById('user-name').textContent = user.name;
+  document.getElementById('genre-badge').textContent = `Favourite: ${user.favorite_genre}`;
+  if (isAdmin()) document.getElementById('nav-admin').style.display = 'block';
+
+  // Pre-populate genre modal
+  document.getElementById('genreModal').addEventListener('show.bs.modal', async () => {
+    await populateGenreSelect('genre-select-modal', user.favorite_genre);
+  });
+
+  async function saveGenre() {
+    const genre   = document.getElementById('genre-select-modal').value;
+    const alertEl = document.getElementById('genre-modal-alert');
+    const { data } = await authFetch(`${API_BASE}/user/update-genre`, {
+      method: 'PUT',
+      body:   JSON.stringify({ favorite_genre: genre })
+    });
+    alertEl.classList.remove('d-none');
+    if (data.success) {
+      alertEl.className = 'alert alert-success';
+      alertEl.textContent = 'Genre updated!';
+      // Update localStorage
+      const u = getUser();
+      u.favorite_genre = genre;
+      localStorage.setItem('user', JSON.stringify(u));
+      document.getElementById('genre-badge').textContent = `Favourite: ${genre}`;
+      setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('genreModal')).hide(), 1000);
+    } else {
+      alertEl.className = 'alert alert-danger';
+      alertEl.textContent = data.message;
+    }
+  }
+
+  async function loadDashboard() {
+    try {
+      const booksRes  = await fetch(`${API_BASE}/books`);
+      const booksData = await booksRes.json();
+      if (booksData.success) document.getElementById('total-books').textContent = booksData.count;
+
+      const wishRes  = await authFetch(`${API_BASE}/wishlist/my`);
+      if (wishRes.data.success) document.getElementById('wishlist-count').textContent = wishRes.data.count;
+
+      const { data } = await authFetch(`${API_BASE}/recommendations/basic`);
+      if (data.success && data.books.length > 0) {
+        document.getElementById('recommended-books').innerHTML = data.books.map(b => renderBookCard(b)).join('');
+      } else {
+        document.getElementById('recommended-books').innerHTML =
+          '<div class="col-12 text-center text-muted py-4"><p>No books found. Seed the database first.</p></div>';
+      }
+    } catch {
+      document.getElementById('recommended-books').innerHTML =
+        '<div class="col-12 text-center text-danger py-4"><p>Could not load. Check server.</p></div>';
+    }
+  }
+
+  loadDashboard();
+</script>
+</body>
+</html>

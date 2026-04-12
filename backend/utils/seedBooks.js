@@ -1,0 +1,63 @@
+const mongoose = require('mongoose');
+require('dotenv').config();
+const Book = require('../models/Book');
+
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/bookRecommendationDB';
+
+const books = [
+  { title: "To Kill a Mockingbird", author: "Harper Lee", genre: "Fiction", description: "A gripping tale of racial injustice and loss of innocence in the American South, told through young Scout Finch whose father Atticus defends a Black man falsely accused of a crime.", rating: 4.8, platform_link: "https://www.amazon.in/s?k=To+Kill+a+Mockingbird", cover_url: "https://covers.openlibrary.org/b/id/8228691-L.jpg" },
+  { title: "1984", author: "George Orwell", genre: "Fiction", description: "A dystopian novel set in a totalitarian society where Big Brother watches every move. Winston Smith rebels against the oppressive regime of surveillance, propaganda and thought control.", rating: 4.7, platform_link: "https://www.amazon.in/s?k=1984+George+Orwell", cover_url: "https://covers.openlibrary.org/b/id/8575708-L.jpg" },
+  { title: "The Great Gatsby", author: "F. Scott Fitzgerald", genre: "Fiction", description: "Set in the Jazz Age, this novel follows the mysterious Jay Gatsby and his obsession with Daisy Buchanan, exploring wealth, class, love and the illusion of the American Dream.", rating: 4.3, platform_link: "https://www.amazon.in/s?k=The+Great+Gatsby", cover_url: "https://covers.openlibrary.org/b/id/8432472-L.jpg" },
+  { title: "Brave New World", author: "Aldous Huxley", genre: "Fiction", description: "A futuristic society where humans are genetically engineered and conditioned for happiness. Bernard Marx challenges the engineered consumerism of his world, seeking genuine human experience.", rating: 4.5, platform_link: "https://www.amazon.in/s?k=Brave+New+World", cover_url: "https://covers.openlibrary.org/b/id/8227645-L.jpg" },
+  { title: "Sapiens", author: "Yuval Noah Harari", genre: "Non-Fiction", description: "A brief history of humankind spanning 70,000 years of human evolution, exploring how Homo sapiens came to dominate Earth through cognitive revolution, agriculture and science.", rating: 4.6, platform_link: "https://www.amazon.in/s?k=Sapiens+Yuval+Harari", cover_url: "https://covers.openlibrary.org/b/id/10519519-L.jpg" },
+  { title: "Educated", author: "Tara Westover", genre: "Non-Fiction", description: "A memoir about a woman raised in a survivalist family who never attended school. She self-educates and eventually earns a PhD from Cambridge University despite immense obstacles.", rating: 4.7, platform_link: "https://www.amazon.in/s?k=Educated+Tara+Westover", cover_url: "https://covers.openlibrary.org/b/id/10283592-L.jpg" },
+  { title: "A Brief History of Time", author: "Stephen Hawking", genre: "Science", description: "Hawking explores the nature of the universe from the Big Bang to black holes, discussing the nature of time, space and the search for a grand unified theory of physics.", rating: 4.6, platform_link: "https://www.amazon.in/s?k=Brief+History+of+Time", cover_url: "https://covers.openlibrary.org/b/id/8091016-L.jpg" },
+  { title: "The Selfish Gene", author: "Richard Dawkins", genre: "Science", description: "Dawkins presents a gene-centered view of evolution, arguing genes are the primary unit of natural selection. A revolutionary book that reshaped how scientists understand biology.", rating: 4.5, platform_link: "https://www.amazon.in/s?k=The+Selfish+Gene", cover_url: "https://covers.openlibrary.org/b/id/8307581-L.jpg" },
+  { title: "Guns, Germs, and Steel", author: "Jared Diamond", genre: "History", description: "Diamond examines why Western civilization came to dominate the world, arguing it was due to environmental and geographical advantages rather than racial or cultural superiority.", rating: 4.4, platform_link: "https://www.amazon.in/s?k=Guns+Germs+Steel", cover_url: "https://covers.openlibrary.org/b/id/8228666-L.jpg" },
+  { title: "The Diary of a Young Girl", author: "Anne Frank", genre: "History", description: "The famous diary kept by Anne Frank while hiding from Nazis in Amsterdam during WWII. A powerful first-person account of life under persecution, full of hope and humanity.", rating: 4.8, platform_link: "https://www.amazon.in/s?k=Diary+of+Anne+Frank", cover_url: "https://covers.openlibrary.org/b/id/8231941-L.jpg" },
+  { title: "Pride and Prejudice", author: "Jane Austen", genre: "Romance", description: "The classic romance between spirited Elizabeth Bennet and proud Mr. Darcy set in rural England. A witty look at marriage, social class and women's independence in the 19th century.", rating: 4.7, platform_link: "https://www.amazon.in/s?k=Pride+and+Prejudice", cover_url: "https://covers.openlibrary.org/b/id/8097958-L.jpg" },
+  { title: "Me Before You", author: "Jojo Moyes", genre: "Romance", description: "Louisa Clark becomes caregiver to Will Traynor, paralyzed in an accident. An emotionally rich love story that challenges assumptions about life, love, and the right to choose.", rating: 4.5, platform_link: "https://www.amazon.in/s?k=Me+Before+You+Jojo+Moyes", cover_url: "https://covers.openlibrary.org/b/id/10279680-L.jpg" },
+  { title: "Gone Girl", author: "Gillian Flynn", genre: "Thriller", description: "On their fifth anniversary, Nick Dunne's wife Amy disappears. Told from alternating perspectives, this twisty thriller reveals shocking secrets about marriage and identity.", rating: 4.4, platform_link: "https://www.amazon.in/s?k=Gone+Girl+Gillian+Flynn", cover_url: "https://covers.openlibrary.org/b/id/10279675-L.jpg" },
+  { title: "The Girl with the Dragon Tattoo", author: "Stieg Larsson", genre: "Thriller", description: "Journalist Mikael Blomkvist and hacker Lisbeth Salander investigate a decades-old disappearance. A complex thriller involving financial intrigue and a gripping murder mystery.", rating: 4.6, platform_link: "https://www.amazon.in/s?k=Girl+Dragon+Tattoo+Larsson", cover_url: "https://covers.openlibrary.org/b/id/8308193-L.jpg" },
+  { title: "Harry Potter and the Sorcerer's Stone", author: "J.K. Rowling", genre: "Fantasy", description: "Harry Potter discovers he is a wizard on his 11th birthday and enters Hogwarts School of Witchcraft and Wizardry, learning about magic and his mysterious past.", rating: 4.9, platform_link: "https://www.amazon.in/s?k=Harry+Potter+Sorcerers+Stone", cover_url: "https://covers.openlibrary.org/b/id/8267011-L.jpg" },
+  { title: "The Lord of the Rings", author: "J.R.R. Tolkien", genre: "Fantasy", description: "The epic quest of hobbit Frodo Baggins to destroy the One Ring and defeat dark lord Sauron. A monumental fantasy with entire mythology, languages, history and rich lore.", rating: 4.9, platform_link: "https://www.amazon.in/s?k=Lord+of+the+Rings", cover_url: "https://covers.openlibrary.org/b/id/8406786-L.jpg" },
+  { title: "Steve Jobs", author: "Walter Isaacson", genre: "Biography", description: "The authorized biography of Apple co-founder Steve Jobs based on 40+ interviews. An unflinching look at the genius, passion and perfectionism of one of the most creative entrepreneurs ever.", rating: 4.6, platform_link: "https://www.amazon.in/s?k=Steve+Jobs+Isaacson", cover_url: "https://covers.openlibrary.org/b/id/8228229-L.jpg" },
+  { title: "Long Walk to Freedom", author: "Nelson Mandela", genre: "Biography", description: "Nelson Mandela's autobiography traces his journey from rural South Africa through imprisonment on Robben Island to his presidency. An inspiring story of resilience and forgiveness.", rating: 4.8, platform_link: "https://www.amazon.in/s?k=Long+Walk+Freedom+Mandela", cover_url: "https://covers.openlibrary.org/b/id/8228666-L.jpg" },
+  { title: "Leonardo da Vinci", author: "Walter Isaacson", genre: "Biography", description: "Based on thousands of pages from da Vinci's notebooks, Isaacson reveals how his curiosity and genius shaped his art and inventions. A masterclass in creative observation.", rating: 4.7, platform_link: "https://www.amazon.in/s?k=Leonardo+da+Vinci+Isaacson", cover_url: "https://covers.openlibrary.org/b/id/10510284-L.jpg" },
+  { title: "Elon Musk", author: "Walter Isaacson", genre: "Biography", description: "A deep dive into the life of Elon Musk from childhood trauma in South Africa to building Tesla, SpaceX and Twitter. A complex portrait of genius, ambition and controversy.", rating: 4.4, platform_link: "https://www.amazon.in/s?k=Elon+Musk+Isaacson", cover_url: "https://covers.openlibrary.org/b/id/14577605-L.jpg" },
+  { title: "Clean Code", author: "Robert C. Martin", genre: "Technology", description: "A practical guide for writing cleaner, maintainable code. Uncle Bob shares principles, patterns and practices for programmers who want to improve software quality.", rating: 4.7, platform_link: "https://www.amazon.in/s?k=Clean+Code+Robert+Martin", cover_url: "https://covers.openlibrary.org/b/id/8091345-L.jpg" },
+  { title: "The Pragmatic Programmer", author: "Andrew Hunt & David Thomas", genre: "Technology", description: "A masterpiece of practical programming advice covering career development, coding techniques, tools and methodologies. Essential reading for every software developer.", rating: 4.6, platform_link: "https://www.amazon.in/s?k=Pragmatic+Programmer", cover_url: "https://covers.openlibrary.org/b/id/10280048-L.jpg" },
+  { title: "Artificial Intelligence: A Modern Approach", author: "Stuart Russell & Peter Norvig", genre: "Technology", description: "The leading AI textbook used in universities worldwide. Covers search algorithms, machine learning, NLP, robotics and the philosophy behind artificial intelligence systems.", rating: 4.5, platform_link: "https://www.amazon.in/s?k=Artificial+Intelligence+Modern+Approach", cover_url: "https://covers.openlibrary.org/b/id/8575689-L.jpg" },
+  { title: "The Innovators", author: "Walter Isaacson", genre: "Technology", description: "The history of the digital revolution from Ada Lovelace to Steve Jobs. Isaacson profiles the visionaries, hackers and geeks who created the computer and the internet.", rating: 4.5, platform_link: "https://www.amazon.in/s?k=The+Innovators+Isaacson", cover_url: "https://covers.openlibrary.org/b/id/10283598-L.jpg" },
+  { title: "Thinking, Fast and Slow", author: "Daniel Kahneman", genre: "Psychology", description: "Nobel laureate Kahneman explores the two systems that drive thinking — fast intuitive and slow deliberate — and how they shape our judgments, decisions and cognitive biases.", rating: 4.6, platform_link: "https://www.amazon.in/s?k=Thinking+Fast+Slow+Kahneman", cover_url: "https://covers.openlibrary.org/b/id/8432502-L.jpg" },
+  { title: "Influence: The Psychology of Persuasion", author: "Robert Cialdini", genre: "Psychology", description: "Cialdini explains why people say yes and how to ethically apply persuasion. Covers six principles: reciprocity, commitment, social proof, authority, liking and scarcity.", rating: 4.5, platform_link: "https://www.amazon.in/s?k=Influence+Cialdini", cover_url: "https://covers.openlibrary.org/b/id/8091015-L.jpg" },
+  { title: "Man's Search for Meaning", author: "Viktor E. Frankl", genre: "Psychology", description: "A psychiatrist's account of surviving Nazi concentration camps and his development of logotherapy — the idea that meaning is the primary motivational force in human life.", rating: 4.8, platform_link: "https://www.amazon.in/s?k=Man+Search+Meaning+Frankl", cover_url: "https://covers.openlibrary.org/b/id/8307578-L.jpg" },
+  { title: "The Power of Habit", author: "Charles Duhigg", genre: "Psychology", description: "Examines the science behind why habits exist and how they can be changed. Using cutting-edge neuroscience research, Duhigg explains habit loops in our lives and businesses.", rating: 4.4, platform_link: "https://www.amazon.in/s?k=Power+of+Habit+Duhigg", cover_url: "https://covers.openlibrary.org/b/id/10279679-L.jpg" }
+];
+
+async function seedDatabase() {
+  try {
+    const needsConnect = mongoose.connection.readyState === 0;
+    if (needsConnect) {
+      await mongoose.connect(MONGO_URI);
+      console.log('✅ Connected to MongoDB');
+    }
+    await Book.deleteMany({});
+    console.log('🗑️  Cleared old books');
+    const inserted = await Book.insertMany(books);
+    console.log(`✅ Inserted ${inserted.length} books successfully!`);
+    if (needsConnect) {
+      await mongoose.disconnect();
+      console.log('✅ Done! Now run: npm start');
+    }
+  } catch (error) {
+    console.error('❌ Seeding failed:', error);
+    if (mongoose.connection.readyState !== 0) process.exit(1);
+  }
+}
+
+if (require.main === module) {
+  seedDatabase().then(() => process.exit(0));
+}
+
+module.exports = { seedDatabase };

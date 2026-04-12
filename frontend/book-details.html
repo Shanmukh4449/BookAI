@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Details - BookAI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+  <div class="container">
+    <a class="navbar-brand text-white" href="index.html">
+      <i class="bi bi-book-half me-2" style="color:#f59e0b"></i>Book<span class="text-accent">AI</span>
+    </a>
+    <div class="glass-search-wrap mx-3">
+      <i class="bi bi-search glass-search-icon"></i>
+      <input type="text" id="global-search-input" class="glass-search-bar" placeholder="Search books...">
+    </div>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto gap-2 align-items-center">
+        <li class="nav-item"><a class="nav-link text-white-50" href="index.html">Home</a></li>
+        <li class="nav-item" id="nav-wishlist" style="display:none">
+          <a class="nav-link text-white-50" href="wishlist.html"><i class="bi bi-heart me-1"></i>Wishlist</a>
+        </li>
+        <li id="nav-login" class="nav-item">
+          <a href="login.html"><button class="btn btn-outline-light btn-sm">Login</button></a>
+        </li>
+        <li id="nav-logout" class="nav-item" style="display:none">
+          <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-5">
+  <div id="book-loading" class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+
+  <div id="book-content" style="display:none">
+    <!-- BOOK INFO -->
+    <div class="row mb-5">
+      <div class="col-md-3 text-center mb-4 mb-md-0">
+        <img id="book-cover" src="" alt="Cover" class="img-fluid rounded shadow" style="max-height:350px;width:100%;object-fit:cover;">
+        <!-- Wishlist button below cover -->
+        <div id="wish-btn-wrap" class="mt-3" style="display:none">
+          <button id="wish-btn" class="btn btn-outline-danger w-100" onclick="handleWishlistToggle()">
+            <i class="bi bi-heart me-2"></i>Add to Wishlist
+          </button>
+        </div>
+      </div>
+      <div class="col-md-9">
+        <nav aria-label="breadcrumb" class="mb-2">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+            <li class="breadcrumb-item active" id="bc-genre">Genre</li>
+          </ol>
+        </nav>
+        <span id="book-genre-badge" class="badge bg-primary mb-2 fs-6 px-3"></span>
+        <h1 id="book-title"  class="fw-black display-6 mb-2"></h1>
+        <h5 id="book-author" class="text-muted mb-3"></h5>
+        <div class="d-flex align-items-center gap-3 mb-4">
+          <div id="book-stars" class="fs-4"></div>
+          <span id="book-rating" class="badge bg-warning text-dark fs-6 px-3"></span>
+          <span id="book-rc"     class="text-muted small"></span>
+        </div>
+        <p id="book-desc" class="text-muted lead mb-4" style="line-height:1.8"></p>
+        <div class="d-flex gap-3 flex-wrap">
+          <a id="platform-link" href="#" target="_blank" class="btn btn-primary px-4">
+            <i class="bi bi-box-arrow-up-right me-2"></i>View on Amazon
+          </a>
+          <button class="btn btn-outline-primary px-4" onclick="scrollToReviews()">
+            <i class="bi bi-chat-square-text me-2"></i>Reviews
+          </button>
+          <button class="btn btn-outline-success px-4" onclick="getAISimilar()">
+            <i class="bi bi-cpu me-2"></i>Find Similar (AI)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI SIMILAR BOOKS -->
+    <div id="ai-section" style="display:none" class="mb-5">
+      <h4 class="section-title"><i class="bi bi-cpu me-2 text-primary"></i>AI Similar Books</h4>
+      <p class="text-muted small mb-3"><i class="bi bi-info-circle me-1"></i>Using TF-IDF + Cosine Similarity</p>
+      <div id="similar-books" class="row"></div>
+    </div>
+
+    <!-- REVIEWS -->
+    <div id="reviews-section">
+      <div class="d-flex align-items-center gap-3 mb-3">
+        <h4 class="section-title mb-0">Reviews &amp; Ratings</h4>
+        <span class="live-badge"><span class="live-dot"></span>Live</span>
+      </div>
+
+      <div id="review-form-wrap" class="card border-0 shadow-sm p-4 mb-4" style="display:none">
+        <h6 class="fw-bold mb-3">Write Your Review</h6>
+        <div id="review-alert" class="alert d-none"></div>
+        <form id="review-form">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Your Rating</label>
+            <div class="d-flex gap-2" id="star-input">
+              <i class="bi bi-star fs-3 text-warning review-star" data-val="1" style="cursor:pointer"></i>
+              <i class="bi bi-star fs-3 text-warning review-star" data-val="2" style="cursor:pointer"></i>
+              <i class="bi bi-star fs-3 text-warning review-star" data-val="3" style="cursor:pointer"></i>
+              <i class="bi bi-star fs-3 text-warning review-star" data-val="4" style="cursor:pointer"></i>
+              <i class="bi bi-star fs-3 text-warning review-star" data-val="5" style="cursor:pointer"></i>
+            </div>
+            <input type="hidden" id="review-rating" value="0">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Review</label>
+            <textarea id="review-text" class="form-control" rows="3"
+              placeholder="Share your thoughts (min 10 characters)..." required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary px-4">Submit Review</button>
+        </form>
+      </div>
+
+      <div id="login-prompt" class="alert alert-info" style="display:none">
+        <i class="bi bi-info-circle me-2"></i>
+        <a href="login.html" class="fw-bold">Login</a> to write a review.
+      </div>
+
+      <div id="reviews-list">
+        <div class="loading-spinner"><div class="spinner-border text-primary"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="book-error" class="text-center py-5 text-danger" style="display:none">
+    <i class="bi bi-exclamation-circle display-4 d-block mb-3"></i>
+    <h4>Book not found.</h4>
+    <a href="index.html" class="btn btn-primary mt-2">Go Home</a>
+  </div>
+</div>
+
+<footer class="text-center">
+  <div class="container">
+    <p class="mb-0 text-white-50 small">BookAI — Online Book Recommendation System</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Socket.IO client -->
+<!-- ✅ FIX 1: Socket.IO client for real-time reviews -->
+<script src="http://localhost:5000/socket.io/socket.io.js"></script>
+<script src="app.js"></script>
+
+<script>
+  const bookId = new URLSearchParams(window.location.search).get('id');
+  if (!bookId) window.location.href = 'index.html';
+
+  let inWishlist = false;
+
+  // ── SOCKET.IO REAL-TIME REVIEWS ──────────────────────────────────────────
+  const socket = getSocket();
+
+if (socket && bookId) {
+
+  socket.emit('joinBook', bookId);
+
+  socket.on('reviewAdded', ({ review, avgRating }) => {
+    prependReview(review, true);
+    updateRatingDisplay(avgRating);
+    showToast('New review just posted! ⭐', 'success');
+  });
+
+  socket.on('reviewDeleted', ({ reviewId, avgRating }) => {
+    const el = document.getElementById(`review-${reviewId}`);
+    if (el) el.remove();
+    updateRatingDisplay(avgRating);
+  });
+}
+
+// cleanup
+window.addEventListener('beforeunload', () => {
+  if (socket && bookId) {
+    socket.emit('leaveBook', bookId);
+  }
+});
+
+  function updateRatingDisplay(avg) {
+    const stars  = document.getElementById('book-stars');
+    const rating = document.getElementById('book-rating');
+    if (stars)  stars.innerHTML  = renderStars(parseFloat(avg));
+    if (rating) rating.textContent = `${avg} / 5`;
+  }
+
+  // ── STAR RATING INPUT ─────────────────────────────────────────────────────
+  let selectedRating = 0;
+  document.querySelectorAll('.review-star').forEach(star => {
+    star.addEventListener('click',     () => { selectedRating = parseInt(star.dataset.val); document.getElementById('review-rating').value = selectedRating; updateStars(selectedRating); });
+    star.addEventListener('mouseover', () => updateStars(parseInt(star.dataset.val)));
+    star.addEventListener('mouseleave',() => updateStars(selectedRating));
+  });
+  function updateStars(val) {
+    document.querySelectorAll('.review-star').forEach((s, i) => {
+      s.className = `bi fs-3 text-warning review-star ${i < val ? 'bi-star-fill' : 'bi-star'}`;
+      s.style.cursor = 'pointer';
+    });
+  }
+
+  // ── WISHLIST TOGGLE ───────────────────────────────────────────────────────
+  async function checkWishlist() {
+    if (!isLoggedIn()) return;
+    try {
+      const { data } = await authFetch(`${API_BASE}/wishlist/check/${bookId}`);
+      inWishlist = data.inWishlist;
+      updateWishBtn();
+    } catch {}
+  }
+  function updateWishBtn() {
+    const btn = document.getElementById('wish-btn');
+    if (!btn) return;
+    if (inWishlist) {
+      btn.className = 'btn btn-danger w-100';
+      btn.innerHTML = '<i class="bi bi-heart-fill me-2"></i>Remove from Wishlist';
+    } else {
+      btn.className = 'btn btn-outline-danger w-100';
+      btn.innerHTML = '<i class="bi bi-heart me-2"></i>Add to Wishlist';
+    }
+  }
+  async function handleWishlistToggle() {
+    if (!isLoggedIn()) { window.location.href = 'login.html'; return; }
+    if (inWishlist) {
+      const { data } = await authFetch(`${API_BASE}/wishlist/remove/${bookId}`, { method: 'DELETE' });
+      if (data.success) { inWishlist = false; updateWishBtn(); showToast('Removed from wishlist'); }
+    } else {
+      const { data } = await authFetch(`${API_BASE}/wishlist/add`, { method: 'POST', body: JSON.stringify({ book_id: bookId }) });
+      if (data.success) { inWishlist = true; updateWishBtn(); showToast('Added to wishlist! ❤️'); }
+      else showToast(data.message, 'warning');
+    }
+  }
+
+  // ── LOAD BOOK ──────────────────────────────────────────────────────────────
+  async function loadBook() {
+    try {
+      const res  = await fetch(`${API_BASE}/books/${bookId}`);
+      const data = await res.json();
+      if (!data.success) throw new Error();
+      const b = data.book;
+      document.title = `${b.title} - BookAI`;
+
+      document.getElementById('book-cover').src = b.cover_url ||
+        `https://via.placeholder.com/300x400/667eea/ffffff?text=No+Cover`;
+      document.getElementById('book-cover').onerror = function() {
+        this.src = 'https://via.placeholder.com/300x400/667eea/ffffff?text=No+Cover';
+      };
+      document.getElementById('bc-genre').textContent       = b.genre;
+      document.getElementById('book-genre-badge').textContent = b.genre;
+      document.getElementById('book-title').textContent      = b.title;
+      document.getElementById('book-author').textContent     = `by ${b.author}`;
+      document.getElementById('book-desc').textContent       = b.description;
+      document.getElementById('book-stars').innerHTML        = renderStars(parseFloat(b.avgRating) || 0);
+      document.getElementById('book-rating').textContent     = `${b.avgRating || b.rating || 0} / 5`;
+      document.getElementById('book-rc').textContent         = `${data.reviews.length} review(s)`;
+
+      // Amazon link fix
+      document.getElementById('platform-link').href = getPlatformLink(b);
+
+      document.getElementById('book-loading').style.display  = 'none';
+      document.getElementById('book-content').style.display  = 'block';
+
+      if (isLoggedIn()) {
+        document.getElementById('review-form-wrap').style.display = 'block';
+        document.getElementById('wish-btn-wrap').style.display    = 'block';
+        checkWishlist();
+      } else {
+        document.getElementById('login-prompt').style.display = 'block';
+      }
+
+      renderReviews(data.reviews);
+    } catch {
+      document.getElementById('book-loading').style.display = 'none';
+      document.getElementById('book-error').style.display   = 'block';
+    }
+  }
+
+  // ── RENDER ALL REVIEWS ────────────────────────────────────────────────────
+  function renderReviews(reviews) {
+    const container = document.getElementById('reviews-list');
+    if (!reviews || reviews.length === 0) {
+      container.innerHTML = '<p class="text-muted">No reviews yet. Be the first!</p>';
+      return;
+    }
+    container.innerHTML = reviews.map(r => reviewHTML(r)).join('');
+  }
+
+  // ── SINGLE REVIEW HTML ────────────────────────────────────────────────────
+  function reviewHTML(r, isNew = false) {
+    const mine = isLoggedIn() && getUser() && (getUser().id === r.user_id?._id || getUser().id === String(r.user_id?._id));
+    return `
+    <div class="card border-0 shadow-sm mb-3 p-3 ${isNew ? 'review-new' : ''}" id="review-${r._id}">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <strong>${r.user_id?.name || 'Anonymous'}</strong>
+          <div>${renderStars(r.rating)}</div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <small class="text-muted">${new Date(r.createdAt).toLocaleDateString()}</small>
+          ${(isAdmin() || mine) ? `<button class="btn btn-outline-danger btn-sm" onclick="deleteReview('${r._id}')"><i class="bi bi-trash"></i></button>` : ''}
+        </div>
+      </div>
+      <p class="mt-2 mb-0 text-muted">${r.review_text}</p>
+    </div>`;
+  }
+
+  function prependReview(review, isNew = false) {
+    const container = document.getElementById('reviews-list');
+    const noMsg = container.querySelector('p.text-muted');
+    if (noMsg) noMsg.remove();
+    container.insertAdjacentHTML('afterbegin', reviewHTML(review, isNew));
+    const countEl = document.getElementById('book-rc');
+    if (countEl) {
+      const cur = parseInt(countEl.textContent) || 0;
+      countEl.textContent = `${cur + 1} review(s)`;
+    }
+  }
+
+  // ── SUBMIT REVIEW ─────────────────────────────────────────────────────────
+  document.getElementById('review-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const alertBox  = document.getElementById('review-alert');
+    const rating    = parseInt(document.getElementById('review-rating').value);
+    const reviewText = document.getElementById('review-text').value.trim();
+    alertBox.classList.remove('d-none');
+    if (rating < 1) { alertBox.className = 'alert alert-warning'; alertBox.textContent = 'Please select a star rating.'; return; }
+    if (reviewText.length < 10) { alertBox.className = 'alert alert-warning'; alertBox.textContent = 'Review must be at least 10 characters.'; return; }
+    try {
+      const { data } = await authFetch(`${API_BASE}/reviews/add`, {
+        method: 'POST',
+        body:   JSON.stringify({ book_id: bookId, review_text: reviewText, rating })
+      });
+      if (data.success) {
+        alertBox.className = 'alert alert-success';
+        alertBox.textContent = 'Review submitted!';
+        document.getElementById('review-text').value = '';
+        selectedRating = 0; updateStars(0);
+        // Socket will handle live update; also show locally for submitter
+        //prependReview(data.review, true);
+      } else {
+        alertBox.className = 'alert alert-danger';
+        alertBox.textContent = data.message;
+      }
+    } catch {
+      alertBox.className = 'alert alert-danger';
+      alertBox.textContent = 'Failed to submit.';
+    }
+  });
+
+  // ── DELETE REVIEW ─────────────────────────────────────────────────────────
+  async function deleteReview(id) {
+    if (!confirm('Delete this review?')) return;
+    const { data } = await authFetch(`${API_BASE}/reviews/${id}`, { method: 'DELETE' });
+    if (data.success) { showToast('Deleted!'); }
+    else showToast(data.message, 'error');
+  }
+
+  // ── AI SIMILAR BOOKS ──────────────────────────────────────────────────────
+  async function getAISimilar() {
+    document.getElementById('ai-section').style.display = 'block';
+    document.getElementById('similar-books').innerHTML =
+      '<div class="loading-spinner"><div class="spinner-border text-primary"></div></div>';
+    document.getElementById('ai-section').scrollIntoView({ behavior: 'smooth' });
+    if (!isLoggedIn()) {
+      document.getElementById('similar-books').innerHTML =
+        '<div class="col-12"><div class="alert alert-info"><a href="login.html">Login</a> to use AI recommendations.</div></div>';
+      return;
+    }
+    try {
+      const { data } = await authFetch(`${API_BASE}/recommendations/ai?book_id=${bookId}&topN=4`);
+      if (data.success && data.books.length > 0) {
+        document.getElementById('similar-books').innerHTML = data.books.map(b => renderBookCard(b)).join('');
+      } else {
+        document.getElementById('similar-books').innerHTML =
+          '<div class="col-12 text-muted"><p>Not enough data for AI similar books.</p></div>';
+      }
+    } catch {
+      document.getElementById('similar-books').innerHTML =
+        '<div class="col-12 text-danger"><p>AI engine error.</p></div>';
+    }
+  }
+
+  function scrollToReviews() {
+    document.getElementById('reviews-section').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  loadBook();
+</script>
+</body>
+</html>

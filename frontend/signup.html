@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - BookAI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+  <style>body{background:linear-gradient(135deg,#0f172a,#1e293b);min-height:100vh;display:flex;align-items:center;}</style>
+</head>
+<body>
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-5">
+      <div class="text-center mb-4">
+        <a href="index.html" class="text-decoration-none">
+          <h2 class="text-white fw-black"><i class="bi bi-book-half me-2" style="color:#f59e0b"></i>BookAI</h2>
+        </a>
+        <p class="text-white-50">Create your account for personalized recommendations.</p>
+      </div>
+      <div class="card auth-card p-4">
+        <div class="card-body">
+          <h4 class="fw-bold mb-4 text-center">Create Account</h4>
+          <div id="alert-box" class="alert d-none"></div>
+          <form id="signup-form">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Full Name</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                <input type="text" id="name" class="form-control" placeholder="John Doe" required minlength="2">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Email Address</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                <input type="email" id="email" class="form-control" placeholder="you@example.com" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Password</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                <input type="password" id="password" class="form-control" placeholder="Min. 6 characters" required minlength="6">
+                <button class="btn btn-outline-secondary" type="button" onclick="togglePw()">
+                  <i class="bi bi-eye" id="eye-icon"></i>
+                </button>
+              </div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Favourite Genre</label>
+              <select id="genre" class="form-select"><option value="">Loading genres...</option></select>
+              <div class="form-text">Used for personalized recommendations.</div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2" id="signup-btn">
+              <span id="btn-text">Create Account</span>
+              <span id="btn-spinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
+            </button>
+          </form>
+          <hr class="my-4">
+          <p class="text-center text-muted mb-0">Already have an account? <a href="login.html" class="text-primary fw-semibold">Sign In</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="app.js"></script>
+<script>
+  if (isLoggedIn()) window.location.href = 'dashboard.html';
+  populateGenreSelect('genre', 'Fiction');
+  function togglePw() {
+    const f=document.getElementById('password'), i=document.getElementById('eye-icon');
+    f.type = f.type==='password' ? 'text' : 'password';
+    i.className = f.type==='password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+  }
+  function showAlert(msg, type='danger') {
+    const box=document.getElementById('alert-box');
+    box.className=`alert alert-${type}`; box.textContent=msg; box.classList.remove('d-none');
+  }
+  document.getElementById('signup-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn=document.getElementById('signup-btn'), spinner=document.getElementById('btn-spinner'), btnText=document.getElementById('btn-text');
+    btn.disabled=true; spinner.classList.remove('d-none'); btnText.textContent='Creating...';
+    try {
+      const res  = await fetch(`${API_BASE}/auth/signup`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ name:document.getElementById('name').value.trim(), email:document.getElementById('email').value.trim(), password:document.getElementById('password').value, favorite_genre:document.getElementById('genre').value }) });
+      const data = await res.json();
+      if (data.success) { showAlert('Account created! Redirecting to login...','success'); setTimeout(()=>window.location.href='login.html',1500); }
+      else { showAlert(data.message||'Signup failed.'); btn.disabled=false; spinner.classList.add('d-none'); btnText.textContent='Create Account'; }
+    } catch {
+      showAlert('Cannot connect to server.');
+      btn.disabled=false; spinner.classList.add('d-none'); btnText.textContent='Create Account';
+    }
+  });
+</script>
+</body>
+</html>

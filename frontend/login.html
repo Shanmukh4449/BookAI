@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - BookAI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+  <style>body{background:linear-gradient(135deg,#0f172a,#1e293b);min-height:100vh;display:flex;align-items:center;}</style>
+</head>
+<body>
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-5">
+      <div class="text-center mb-4">
+        <a href="index.html" class="text-decoration-none">
+          <h2 class="text-white fw-black"><i class="bi bi-book-half me-2" style="color:#f59e0b"></i>BookAI</h2>
+        </a>
+        <p class="text-white-50">Welcome back! Sign in to continue.</p>
+      </div>
+      <div class="card auth-card p-4">
+        <div class="card-body">
+          <h4 class="fw-bold mb-4 text-center">Sign In</h4>
+          <div id="alert-box" class="alert d-none"></div>
+          <form id="login-form">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Email Address</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                <input type="email" id="email" class="form-control" placeholder="you@example.com" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Password</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+                <button class="btn btn-outline-secondary" type="button" onclick="togglePw()">
+                  <i class="bi bi-eye" id="eye-icon"></i>
+                </button>
+              </div>
+            </div>
+            <div class="text-end mb-4">
+              <a href="forgot-password.html" class="small text-primary">Forgot password?</a>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2" id="login-btn">
+              <span id="btn-text">Sign In</span>
+              <span id="btn-spinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
+            </button>
+          </form>
+          <hr class="my-4">
+          <p class="text-center text-muted mb-0">No account? <a href="signup.html" class="text-primary fw-semibold">Sign Up</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="app.js"></script>
+<script>
+  if (isLoggedIn()) window.location.href = 'dashboard.html';
+  function togglePw() {
+    const f = document.getElementById('password');
+    const i = document.getElementById('eye-icon');
+    f.type = f.type === 'password' ? 'text' : 'password';
+    i.className = f.type === 'password' ? 'bi bi-eye' : 'bi bi-eye-slash';
+  }
+  function showAlert(msg, type='danger') {
+    const box = document.getElementById('alert-box');
+    box.className = `alert alert-${type}`;
+    box.textContent = msg;
+    box.classList.remove('d-none');
+  }
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn=document.getElementById('login-btn'), spinner=document.getElementById('btn-spinner'), btnText=document.getElementById('btn-text');
+    btn.disabled=true; spinner.classList.remove('d-none'); btnText.textContent='Signing in...';
+    try {
+      const res  = await fetch(`${API_BASE}/auth/login`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ email:document.getElementById('email').value.trim(), password:document.getElementById('password').value }) });
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        showAlert('Login successful! Redirecting...','success');
+        setTimeout(() => { window.location.href = data.user.role==='admin' ? 'admin.html' : 'dashboard.html'; }, 800);
+      } else {
+        showAlert(data.message || 'Login failed.');
+        btn.disabled=false; spinner.classList.add('d-none'); btnText.textContent='Sign In';
+      }
+    } catch {
+      showAlert('Cannot connect to server. Start the backend first.');
+      btn.disabled=false; spinner.classList.add('d-none'); btnText.textContent='Sign In';
+    }
+  });
+</script>
+</body>
+</html>
