@@ -1,8 +1,8 @@
 /**
  * SHARED UTILITIES v2.0
  */
-const API_BASE   = 'http://localhost:5000/api';
-const SOCKET_URL = 'http://localhost:5000';
+const API_BASE   = '/api';
+const SOCKET_URL = window.location.origin;
 
 function getToken()   { return localStorage.getItem('token'); }
 function getUser()    { const u = localStorage.getItem('user'); return u ? JSON.parse(u) : null; }
