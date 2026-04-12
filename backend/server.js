@@ -94,9 +94,9 @@ app.get('/api', (req, res) => {
   res.json({ message: 'BookAI API v2.0 Running ✅', version: '2.0.0' });
 });
 
-// ── 404 ──────────────────────────────────────────────────────────────────────
-app.use((req, res) => {
-  res.status(404).json({ success: false, message: 'Route not found' });
+// ── FRONTEND FALLBACK (VERY IMPORTANT FOR DEPLOYMENT) ─────────────────────────
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
 // ── ERROR HANDLER ─────────────────────────────────────────────────────────────
