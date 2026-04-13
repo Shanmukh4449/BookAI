@@ -10,7 +10,9 @@ const sendOTPEmail = async (to, otp) => {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   },
-  connectionTimeout: 10000,
+  tls: {
+    rejectUnauthorized: false
+  }
 });
 
     await transporter.sendMail({
