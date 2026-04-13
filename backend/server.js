@@ -10,6 +10,7 @@ const rateLimit = require('express-rate-limit');
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 
 // ✅ SOCKET.IO SETUP (Improved CORS)
@@ -88,6 +89,7 @@ app.use('/api/admin',           adminRoutes);
 app.use('/api/wishlist',        wishlistRoutes);
 app.use('/api/user',            userRoutes);
 app.use('/api/genres',          genreRoutes);
+
 
 // ── ROOT ─────────────────────────────────────────────────────────────────────
 app.get('/api', (req, res) => {
